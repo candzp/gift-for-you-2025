@@ -28,16 +28,11 @@
       font-size:22px;
       opacity:.55;
       filter: drop-shadow(0 10px 14px rgba(0,0,0,.10));
-      animation: emojiFall linear infinite;
       user-select:none;
       will-change: transform;
     }
-    @keyframes emojiFall{
-      0%{ transform: translateY(-12vh) rotate(0deg); }
-      100%{ transform: translateY(112vh) rotate(360deg); }
-    }
     @media (prefers-reduced-motion: reduce){
-      .emoji-confetti span{ animation:none !important; display:none; }
+      .emoji-confetti span{ display:none !important; }
     }
 
     .card{
@@ -119,6 +114,18 @@
       border: 1px solid rgba(31,122,85,.18);
       font-size:14px;
     }
+
+    /* small demo hint */
+    .demo-pill{
+      display:inline-block;
+      padding:6px 10px;
+      border-radius:999px;
+      background: rgba(0,0,0,.05);
+      border:1px solid rgba(0,0,0,.05);
+      font-size:12px;
+      color: rgba(0,0,0,.55);
+      margin-top:10px;
+    }
   </style>
 </head>
 
@@ -138,7 +145,7 @@
 
     <p>Happy Holidays and Happy New Year! Here’s a little gift for you 🎉</p>
 
-    <!-- UNLOCK SECTION (will be hidden after success) -->
+    <!-- UNLOCK SECTION (hidden after success) -->
     <div id="unlockSection">
       <h2>Unlock your code</h2>
       <div class="row">
@@ -149,6 +156,9 @@
         Your QR contains an <b>encrypted</b> gift code. The PIN unlocks it on your device.
       </p>
       <div id="err" class="error"></div>
+
+      <!-- Optional: show only when using demo -->
+      <div id="demoHint" class="demo-pill hidden">Demo mode: PIN is <b>123456</b></div>
     </div>
 
     <!-- REVEAL SECTION -->
@@ -201,33 +211,25 @@
   (function makeEmojiConfetti(){
     const holder = document.getElementById("emojiConfetti");
     const emojis = ["🎆","🎇","🎉","🎊","✨","💫","⭐️","💖","🥳","🧨","🪩"];
-    const count = 26;
+    const count = 28;
 
     for(let i=0;i<count;i++){
       const e = document.createElement("span");
       e.textContent = emojis[Math.floor(Math.random()*emojis.length)];
 
-      const left = Math.random()*100;             // vw
-      const dur = 7 + Math.random()*7;            // seconds
-      const delay = -Math.random()*10;            // start mid-animation
-      const size = 16 + Math.random()*16;         // px
-      const drift = (Math.random()*2 - 1) * 120;  // px drift
+      const left = Math.random()*100;            // vw
+      const dur = 7 + Math.random()*7;           // seconds
+      const delay = -Math.random()*10;           // start mid-animation
+      const size = 16 + Math.random()*16;        // px
+      const drift = (Math.random()*2 - 1) * 140; // px drift
 
       e.style.left = left + "vw";
       e.style.fontSize = size + "px";
       e.style.opacity = (0.35 + Math.random()*0.45).toFixed(2);
-      e.style.animationDuration = dur + "s";
-      e.style.animationDelay = delay + "s";
-
-      // add sideways drift using translateX in keyframes-ish via CSS variable trick
-      e.style.setProperty("--drift", drift + "px");
-      e.style.animationName = "emojiFall";
-      // tweak per-element transform by adding X drift in JS on each tick? keep simple:
-      // Instead, bake drift into rotate by using translateX in inline style using animation with CSS? Not needed.
 
       holder.appendChild(e);
 
-      // Give each element slight horizontal drift using Web Animations API (keeps CSS simple)
+      // Web Animations API for drift + fall
       try{
         e.animate(
           [
@@ -236,18 +238,21 @@
           ],
           { duration: dur*1000, iterations: Infinity, easing: "linear", delay: delay*1000 }
         );
-        // Disable CSS animation to avoid double-animating
-        e.style.animation = "none";
       }catch{
-        // If WAAPI unsupported, CSS animation still works (vertical only)
+        // Fallback: no animation (rare)
       }
     }
   })();
 
-  // --- Gift unlock logic (Option B) ---
-  // Fragment format:
+  // --- Gift unlock logic (Option B + Demo mode) ---
+  // Real fragment:
   // #enc.<salt>.<iv>.<ct>&n=1|2
+  // Demo fragment:
+  // #demo&n=1   (PIN 123456)
   const rawFrag = (location.hash || "").slice(1);
+
+  const DEMO_PIN = "123456";
+  const DEMO_CODE = "TEST-CODE-XXXX-XXXX";
 
   const unlockSection = document.getElementById("unlockSection");
   const errEl = document.getElementById("err");
@@ -257,6 +262,7 @@
   const unlockBtn = document.getElementById("unlockBtn");
   const codeNumEl = document.getElementById("codeNum");
   const nextHint = document.getElementById("nextHint");
+  const demoHint = document.getElementById("demoHint");
 
   function parseFrag(f){
     let encPart = f;
@@ -270,7 +276,9 @@
   const parsed = parseFrag(rawFrag);
   codeNumEl.textContent = parsed.n ? `#${parsed.n}` : "#?";
 
-  // Set "unlock code 2" guidance AFTER reveal
+  // Show demo hint if in demo mode
+  if (parsed.encPart === "demo") demoHint.classList.remove("hidden");
+
   function setNextHint(){
     const n = parsed.n;
     if (n === "1") {
@@ -332,6 +340,7 @@
   }
 
   function clearUrlFragment(){
+    // removes #... from address bar after unlock (less shareable)
     try { history.replaceState(null, "", location.pathname + location.search); } catch {}
   }
 
@@ -344,8 +353,14 @@
 
       unlockBtn.disabled = true;
 
-      const code = await decryptWithPin(pin);
-      codeEl.textContent = code;
+      // ✅ DEMO MODE
+      if (parsed.encPart === "demo"){
+        if (pin !== DEMO_PIN) throw new Error("Incorrect PIN (demo). Try 123456.");
+        codeEl.textContent = DEMO_CODE;
+      } else {
+        const code = await decryptWithPin(pin);
+        codeEl.textContent = code;
+      }
 
       // Hide unlock UI entirely after success
       unlockSection.classList.add("hidden");
@@ -356,7 +371,7 @@
 
       pinEl.value = "";
 
-      // Remove fragment after unlock (optional safety)
+      // Optional safety: remove fragment from URL
       clearUrlFragment();
     }catch(e){
       errEl.textContent = e.message || String(e);
