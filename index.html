@@ -3,436 +3,293 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Gift Note 🎁</title>
-
-  <!-- Handwritten fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Caveat:wght@600&family=Pacifico&display=swap" rel="stylesheet">
+  <title>Holiday Gift 🎁</title>
 
   <style>
-    :root{
-      --ink: rgba(20, 24, 30, .92);
-      --muted: rgba(20, 24, 30, .62);
-      --green: #1f7a55;
-      --paper: #fffdf7;
-      --line: rgba(62, 120, 255, .22);
-      --margin: rgba(255, 70, 90, .22);
-    }
-
-    /* Notebook paper background */
     body{
-      margin:0;
-      min-height:100vh;
-      display:grid;
-      place-items:center;
-      color: var(--ink);
-      font-family: "Patrick Hand", system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      overflow-x:hidden;
-
-      background:
-        /* soft desk shadow */
-        radial-gradient(1000px 600px at 50% 0%, rgba(0,0,0,.07), transparent 55%),
-        /* paper tone */
-        linear-gradient(180deg, #faf7f1 0%, #f5f2ea 100%);
-    }
-
-    /* Paper sheet */
-    .sheet-wrap{
-      width:min(860px, 94vw);
-      padding: 26px 14px;
-      position:relative;
-    }
-
-    .sheet{
-      position:relative;
-      background: var(--paper);
-      border-radius: 18px;
-      box-shadow: 0 30px 80px rgba(0,0,0,.18);
-      border: 1px solid rgba(0,0,0,.08);
+      margin:0;min-height:100vh;
+      display:grid;place-items:center;
+      background: radial-gradient(1200px 600px at 20% 10%, #fff 0%, #f6f3ee 55%, #efe9df 100%);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
       overflow:hidden;
     }
 
-    /* Blue horizontal lines */
-    .sheet::before{
-      content:"";
-      position:absolute;
+    /* Emoji confetti layer */
+    .emoji-confetti{
+      position:fixed;
       inset:0;
-      background:
-        /* red margin line */
-        linear-gradient(90deg, transparent 0, transparent 64px, var(--margin) 64px, var(--margin) 66px, transparent 66px),
-        /* blue notebook lines */
-        repeating-linear-gradient(
-          0deg,
-          transparent 0px,
-          transparent 26px,
-          var(--line) 26px,
-          var(--line) 27px
-        );
-      opacity: 1;
       pointer-events:none;
+      overflow:hidden;
+      z-index:0;
     }
-
-    /* optional punched holes (neutral) */
-    .holes{
+    .emoji-confetti span{
       position:absolute;
-      left: 18px;
-      top: 24px;
-      bottom: 24px;
-      width: 22px;
-      pointer-events:none;
-      opacity:.35;
-      display:flex;
-      flex-direction:column;
-      gap: 28px;
-      justify-content:flex-start;
+      top:-10vh;
+      font-size:22px;
+      opacity:.55;
+      filter: drop-shadow(0 10px 14px rgba(0,0,0,.10));
+      animation: emojiFall linear infinite;
+      user-select:none;
+      will-change: transform;
     }
-    .holes span{
-      width:14px;height:14px;border-radius:999px;
-      background: rgba(0,0,0,.12);
-      box-shadow: inset 0 0 0 6px rgba(255,255,255,.7);
+    @keyframes emojiFall{
+      0%{ transform: translateY(-12vh) rotate(0deg); }
+      100%{ transform: translateY(112vh) rotate(360deg); }
+    }
+    @media (prefers-reduced-motion: reduce){
+      .emoji-confetti span{ animation:none !important; display:none; }
     }
 
-    /* content */
-    .content{
+    .card{
       position:relative;
-      padding: 26px 28px 28px 86px; /* left padding accounts for margin line */
+      z-index:1;
+      width:min(680px,92vw);
+      background:#fff;
+      border-radius:20px;
+      box-shadow:0 18px 50px rgba(0,0,0,.12);
+      padding:24px;
+      border:1px solid rgba(0,0,0,.06);
     }
-
     .top{
       display:flex;
       align-items:flex-start;
       justify-content:space-between;
-      gap: 14px;
+      gap:12px;
       flex-wrap:wrap;
     }
-
-    h1{
-      margin:0;
-      font-family: "Caveat", "Patrick Hand", cursive;
-      font-size: 42px;
-      letter-spacing: .3px;
-      line-height: 1.05;
-    }
-
-    .tag{
-      margin-top: 2px;
-      font-size: 16px;
-      color: var(--muted);
-    }
+    h1{margin:0 0 6px;font-size:28px;letter-spacing:.2px}
+    h2{margin:18px 0 8px;font-size:18px}
+    p{line-height:1.45;margin:8px 0}
+    .tag{opacity:.7;font-size:14px;margin-bottom:10px}
 
     .badge{
       display:inline-flex;
       align-items:center;
-      gap: 8px;
-      padding: 10px 14px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.65);
-      border: 1px solid rgba(0,0,0,.08);
-      box-shadow: 0 12px 25px rgba(0,0,0,.08);
-      backdrop-filter: blur(6px);
-      font-size: 15px;
-      white-space: nowrap;
-      margin-top: 6px;
+      gap:6px;
+      padding:8px 12px;
+      border-radius:999px;
+      background:#f2f2f2;
+      font-size:13px;
+      white-space:nowrap;
+      border:1px solid rgba(0,0,0,.05);
     }
-    .badge b{ font-weight: 800; }
+    .badge b{font-weight:750}
 
-    p{
-      margin: 14px 0;
-      font-size: 18px;
-      line-height: 1.5;
-    }
-
-    .divider{
-      height: 1px;
-      background: rgba(0,0,0,.10);
-      margin: 18px 0;
-    }
-
-    h2{
-      margin: 18px 0 8px;
-      font-family: "Caveat", "Patrick Hand", cursive;
-      font-size: 28px;
-      letter-spacing: .2px;
-    }
-
-    .row{
-      display:flex;
-      gap: 12px;
-      flex-wrap:wrap;
-      align-items:center;
-      margin-top: 10px;
-    }
-
+    .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
     input{
-      flex: 1;
-      min-width: 220px;
-      padding: 14px 16px;
-      border-radius: 14px;
-      border: 1px solid rgba(0,0,0,.14);
-      background: rgba(255,255,255,.75);
-      font-family: "Patrick Hand", system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      font-size: 18px;
-      outline:none;
+      padding:12px 14px;border-radius:12px;border:1px solid #ddd;
+      font-size:16px;flex:1;min-width:180px
     }
-    input:focus{
-      border-color: rgba(31,122,85,.55);
-      box-shadow: 0 0 0 4px rgba(31,122,85,.12);
+    button,a.btn{
+      border:0;border-radius:12px;
+      padding:12px 14px;
+      font-weight:700;
+      cursor:pointer;text-decoration:none;
+      display:inline-flex;align-items:center;justify-content:center;gap:8px;
     }
+    button{background:#1f7a55;color:#fff}
+    button:disabled{opacity:.6;cursor:not-allowed}
+    a.btn.secondary{background:#444;color:#fff}
 
-    button, a.btn{
-      border:0;
-      border-radius: 14px;
-      padding: 14px 16px;
-      font-weight: 800;
-      cursor:pointer;
-      text-decoration:none;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      gap: 8px;
-      font-size: 16px;
-      font-family: "Patrick Hand", system-ui;
-    }
-
-    button{
-      background: var(--green);
-      color: #fff;
-      box-shadow: 0 16px 32px rgba(31,122,85,.20);
-    }
-    button:hover{ filter: brightness(1.03); }
-    button:disabled{ opacity:.6; cursor:not-allowed; box-shadow:none; }
-
-    a.btn.secondary{
-      background: rgba(0,0,0,.82);
-      color:#fff;
-      box-shadow: 0 16px 32px rgba(0,0,0,.18);
-    }
-
-    .muted{
-      color: var(--muted);
-      font-size: 15px;
-      margin-top: 8px;
-    }
-
-    .error{
-      margin-top: 10px;
-      color: #b00020;
-      font-size: 14px;
-    }
-
-    .hidden{ display:none; }
-
-    /* code box */
     .code{
-      margin: 14px 0 8px;
-      padding: 14px 16px;
-      border-radius: 16px;
-      border: 1px dashed rgba(0,0,0,.28);
-      background: rgba(255,255,255,.62);
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-      font-weight: 700;
-      font-size: 16px;
-      word-break: break-all;
-      position:relative;
+      margin:14px 0 6px;
+      padding:14px;
+      border-radius:12px;
+      background:#f2f2f2;
+      font:650 16px ui-monospace,monospace;
+      word-break:break-all
     }
-
+    .muted{font-size:13px;opacity:.75;line-height:1.4}
     .steps{
-      background: rgba(255,255,255,.55);
-      border: 1px solid rgba(0,0,0,.08);
-      border-radius: 16px;
-      padding: 14px 16px;
-      font-size: 17px;
+      background:#fafafa;border-radius:12px;padding:14px;font-size:14px;
+      border:1px solid rgba(0,0,0,.05);
     }
-    .steps ol{ margin: 8px 0; padding-left: 18px; }
-    .steps li{ margin: 8px 0; }
+    .steps ol{padding-left:18px;margin:8px 0}
+    .steps li{margin:6px 0}
+    .hidden{display:none}
+    .error{margin-top:10px;color:#b00020;font-size:13px}
+    .divider{height:1px;background:#eee;margin:16px 0}
+    .ps{font-style:italic;font-size:14px}
 
-    /* Signature (appears near P.S., only after unlock) */
-    .ps-wrap{
-      position: relative;
-      margin-top: 6px;
-    }
-
-    .signature{
-      margin-top: 10px;
-      display:inline-block;
-      font-family: "Pacifico", cursive;
-      font-size: 26px;
-      color: rgba(20, 24, 30, .62);
-      transform: rotate(-2deg);
-      opacity: 0;
-      animation: sigFadeIn 1.2s ease-out forwards;
-      position: relative;
-    }
-
-    /* gentle float */
-    .signature{
-      animation-name: sigFadeIn, sigFloat;
-      animation-duration: 1.2s, 3.8s;
-      animation-timing-function: ease-out, ease-in-out;
-      animation-fill-mode: forwards, infinite;
-      animation-delay: .1s, 1.25s;
-    }
-
-    @keyframes sigFadeIn{
-      from{ opacity:0; transform: translateY(8px) rotate(-2deg); }
-      to{ opacity:1; transform: translateY(0) rotate(-2deg); }
-    }
-    @keyframes sigFloat{
-      0%,100%{ transform: translateY(0) rotate(-2deg); }
-      50%{ transform: translateY(-3px) rotate(-2deg); }
-    }
-
-    .signature small{
-      display:block;
-      font-family: "Caveat", cursive;
-      font-size: 18px;
-      opacity:.75;
-      margin-bottom: -4px;
-    }
-
-    /* Handwritten underline + heart doodle */
-    .signature::after{
-      content:"";
-      position:absolute;
-      left: 0;
-      right: -6px;
-      bottom: -8px;
-      height: 14px;
-      background:
-        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='60' viewBox='0 0 320 60'%3E%3Cpath d='M10 34 C60 52, 120 10, 180 34 S 300 52, 310 28' fill='none' stroke='rgba(20,24,30,0.35)' stroke-width='4' stroke-linecap='round'/%3E%3Cpath d='M278 18 c-6-10-20-4-16 8 3 10 16 16 16 16s13-6 16-16c4-12-10-18-16-8z' fill='rgba(255,107,107,0.55)' stroke='rgba(20,24,30,0.20)' stroke-width='2'/%3E%3C/svg%3E") no-repeat;
-      background-size: 320px 60px;
-      opacity: .95;
-      pointer-events:none;
-    }
-
-    /* Reduced motion */
-    @media (prefers-reduced-motion: reduce){
-      .signature{ animation:none !important; opacity:1; }
+    .notice{
+      margin-top:10px;
+      padding:12px 14px;
+      border-radius:12px;
+      background: rgba(31,122,85,.08);
+      border: 1px solid rgba(31,122,85,.18);
+      font-size:14px;
     }
   </style>
 </head>
 
 <body>
-  <div class="sheet-wrap">
-    <div class="sheet">
-      <div class="holes" aria-hidden="true">
-        <span></span><span></span><span></span><span></span><span></span>
+  <div class="emoji-confetti" id="emojiConfetti" aria-hidden="true"></div>
+
+  <main class="card">
+    <div class="top">
+      <div>
+        <h1>Season’s Greetings ✨</h1>
+        <div class="tag">Lazada Digital Gift Code</div>
       </div>
-
-      <div class="content">
-        <div class="top">
-          <div>
-            <h1>Season’s Greetings ✨</h1>
-            <div class="tag">Lazada Digital Gift Code</div>
-          </div>
-          <div class="badge" title="Helps you know if this is your first or second QR.">
-            🎁 <b>Gift Code</b> <span id="codeNum">#?</span>
-          </div>
-        </div>
-
-        <p>Happy Holidays and Happy New Year! Here’s a little gift for you 🎉</p>
-
-        <h2>Unlock your code</h2>
-        <div class="row">
-          <input id="pin" inputmode="numeric" placeholder="Enter your PIN" />
-          <button id="unlockBtn">Unlock ✨</button>
-        </div>
-        <div class="muted">
-          Your QR contains an <b>encrypted</b> gift code. The PIN unlocks it on your device.
-        </div>
-
-        <div id="err" class="error"></div>
-
-        <div id="reveal" class="hidden">
-          <div class="code" id="giftCode">—</div>
-          <div class="muted">Expiry: <b>10/01/2045</b></div>
-
-          <div class="row">
-            <button id="copyBtn">Copy code 📋</button>
-            <a class="btn secondary"
-               href="https://play.google.com/store/apps/details?id=com.lazada.android"
-               target="_blank" rel="noreferrer">
-               Get Lazada App (Android)
-            </a>
-          </div>
-
-          <div class="muted">
-            iPhone / iPad: open the App Store and search <b>“Lazada”</b>.
-          </div>
-
-          <div class="divider"></div>
-
-          <h2>How to redeem in the Lazada app</h2>
-          <div class="steps">
-            <ol>
-              <li>Open the <b>Lazada app</b> and log in.</li>
-              <li>Go to the <b>Account</b> tab.</li>
-              <li>Select <b>Lazada Wallet</b>.</li>
-              <li>Tap <b>Gift Card</b>.</li>
-              <li>Paste the code and tap <b>Redeem</b>.</li>
-            </ol>
-            <div class="muted">
-              You have <b>two gift codes</b> — please scan your second QR to unlock the other one.
-            </div>
-          </div>
-
-          <div class="divider"></div>
-
-          <h2>P.S.</h2>
-          <div class="steps ps-wrap">
-            <p>If you run into issues, contact me 📫</p>
-
-            <!-- Signature: only appears after unlock -->
-            <div class="signature" id="sig">
-              <small>xoxo,</small>
-              Candz
-            </div>
-          </div>
-        </div>
+      <div class="badge" title="Helps you know if this is your first or second QR.">
+        🎁 <b>Gift Code</b> <span id="codeNum">#?</span>
       </div>
     </div>
-  </div>
+
+    <p>Happy Holidays and Happy New Year! Here’s a little gift for you 🎉</p>
+
+    <!-- UNLOCK SECTION (will be hidden after success) -->
+    <div id="unlockSection">
+      <h2>Unlock your code</h2>
+      <div class="row">
+        <input id="pin" inputmode="numeric" placeholder="Enter your PIN" />
+        <button id="unlockBtn">Unlock ✨</button>
+      </div>
+      <p class="muted">
+        Your QR contains an <b>encrypted</b> gift code. The PIN unlocks it on your device.
+      </p>
+      <div id="err" class="error"></div>
+    </div>
+
+    <!-- REVEAL SECTION -->
+    <div id="reveal" class="hidden">
+      <div class="code" id="giftCode">—</div>
+      <p class="muted">Expiry: <b>10/01/2045</b></p>
+
+      <div class="row">
+        <button id="copyBtn">Copy code 📋</button>
+        <a class="btn secondary"
+           href="https://play.google.com/store/apps/details?id=com.lazada.android"
+           target="_blank" rel="noreferrer">
+           Get Lazada App (Android)
+        </a>
+      </div>
+
+      <p class="muted">
+        iPhone / iPad: open the App Store and search <b>“Lazada”</b>.
+      </p>
+
+      <div class="notice" id="nextHint"></div>
+
+      <div class="divider"></div>
+
+      <h2>How to redeem in the Lazada app 🎁</h2>
+      <div class="steps">
+        <ol>
+          <li>Open the <b>Lazada app</b> and log in.</li>
+          <li>Go to the <b>Account</b> tab.</li>
+          <li>Select <b>Lazada Wallet</b>.</li>
+          <li>Tap <b>Gift Card</b>.</li>
+          <li>Paste the code and tap <b>Redeem</b>.</li>
+        </ol>
+        <p class="muted">
+          You have <b>two gift codes</b> — scan your other QR to unlock the second one.
+        </p>
+      </div>
+
+      <div class="divider"></div>
+
+      <h2>P.S.</h2>
+      <div class="steps">
+        <p class="ps">If you run into issues, contact me 📫</p>
+      </div>
+    </div>
+  </main>
 
 <script>
-  // --- Demo/Test mode (safe) ---
-  // Visit: .../#demo&n=1  and use PIN 123456
-  const DEMO_PIN = "123456";
-  const DEMO_CODE = "TEST-CODE-XXXX-XXXX";
+  // --- Emoji confetti (neutral celebration) ---
+  (function makeEmojiConfetti(){
+    const holder = document.getElementById("emojiConfetti");
+    const emojis = ["🎆","🎇","🎉","🎊","✨","💫","⭐️","💖","🥳","🧨","🪩"];
+    const count = 26;
 
-  // Fragment format for real links:
-  // #enc.<saltB64url>.<ivB64url>.<ctB64url>&n=1|2
-  // Demo format:
-  // #demo&n=1
+    for(let i=0;i<count;i++){
+      const e = document.createElement("span");
+      e.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+
+      const left = Math.random()*100;             // vw
+      const dur = 7 + Math.random()*7;            // seconds
+      const delay = -Math.random()*10;            // start mid-animation
+      const size = 16 + Math.random()*16;         // px
+      const drift = (Math.random()*2 - 1) * 120;  // px drift
+
+      e.style.left = left + "vw";
+      e.style.fontSize = size + "px";
+      e.style.opacity = (0.35 + Math.random()*0.45).toFixed(2);
+      e.style.animationDuration = dur + "s";
+      e.style.animationDelay = delay + "s";
+
+      // add sideways drift using translateX in keyframes-ish via CSS variable trick
+      e.style.setProperty("--drift", drift + "px");
+      e.style.animationName = "emojiFall";
+      // tweak per-element transform by adding X drift in JS on each tick? keep simple:
+      // Instead, bake drift into rotate by using translateX in inline style using animation with CSS? Not needed.
+
+      holder.appendChild(e);
+
+      // Give each element slight horizontal drift using Web Animations API (keeps CSS simple)
+      try{
+        e.animate(
+          [
+            { transform: "translate(0, -12vh) rotate(0deg)" },
+            { transform: `translate(${drift}px, 112vh) rotate(360deg)` }
+          ],
+          { duration: dur*1000, iterations: Infinity, easing: "linear", delay: delay*1000 }
+        );
+        // Disable CSS animation to avoid double-animating
+        e.style.animation = "none";
+      }catch{
+        // If WAAPI unsupported, CSS animation still works (vertical only)
+      }
+    }
+  })();
+
+  // --- Gift unlock logic (Option B) ---
+  // Fragment format:
+  // #enc.<salt>.<iv>.<ct>&n=1|2
   const rawFrag = (location.hash || "").slice(1);
 
+  const unlockSection = document.getElementById("unlockSection");
   const errEl = document.getElementById("err");
   const reveal = document.getElementById("reveal");
   const codeEl = document.getElementById("giftCode");
   const pinEl = document.getElementById("pin");
   const unlockBtn = document.getElementById("unlockBtn");
   const codeNumEl = document.getElementById("codeNum");
+  const nextHint = document.getElementById("nextHint");
 
   function parseFrag(f){
-    let main = f;
+    let encPart = f;
     let n = "";
     const m = f.match(/&n=(\d+)/);
     if (m) n = m[1];
-    main = f.split("&n=")[0];
-    return { main, n };
+    encPart = f.split("&n=")[0];
+    return { encPart, n };
   }
 
   const parsed = parseFrag(rawFrag);
   codeNumEl.textContent = parsed.n ? `#${parsed.n}` : "#?";
 
+  // Set "unlock code 2" guidance AFTER reveal
+  function setNextHint(){
+    const n = parsed.n;
+    if (n === "1") {
+      nextHint.innerHTML = "✅ You unlocked <b>Gift Code #1</b>. Next: scan your <b>Gift Code #2</b> QR to unlock the second code.";
+    } else if (n === "2") {
+      nextHint.innerHTML = "✅ You unlocked <b>Gift Code #2</b>. Next: scan your <b>Gift Code #1</b> QR if you haven’t redeemed it yet.";
+    } else {
+      nextHint.innerHTML = "✅ Code unlocked. If you have a second gift QR, scan it to unlock your other code.";
+    }
+  }
+
   // Copy button
   const copyBtn = document.getElementById("copyBtn");
   copyBtn.onclick = async () => {
-    try{
+    try {
       await navigator.clipboard.writeText(codeEl.textContent);
       copyBtn.textContent = "Copied ✓";
       setTimeout(()=>copyBtn.textContent="Copy code 📋",1500);
-    }catch{
+    } catch {
       alert("Copy failed. You can manually select and copy the code.");
     }
   };
@@ -441,7 +298,9 @@
     s = s.replace(/-/g,'+').replace(/_/g,'/');
     while (s.length % 4) s += '=';
     const bin = atob(s);
-    return Uint8Array.from(bin, c => c.charCodeAt(0));
+    const out = new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++) out[i]=bin.charCodeAt(i);
+    return out;
   }
 
   async function deriveKey(pin, saltBytes){
@@ -457,11 +316,11 @@
   }
 
   async function decryptWithPin(pin){
-    const encFrag = parsed.main;
+    const encFrag = parsed.encPart;
 
-    if(!encFrag.startsWith("enc.")) throw new Error("Invalid QR data. Please scan the QR again.");
+    if(!encFrag.startsWith("enc.")) throw new Error("Invalid QR data. Please scan the QR code again.");
     const parts = encFrag.split(".");
-    if(parts.length !== 4) throw new Error("Invalid QR data format. Please scan the QR again.");
+    if(parts.length !== 4) throw new Error("Invalid QR data format. Please scan the QR code again.");
 
     const salt = b64urlToBytes(parts[1]);
     const iv   = b64urlToBytes(parts[2]);
@@ -473,7 +332,6 @@
   }
 
   function clearUrlFragment(){
-    // Removes #... from address bar after unlock (less shareable)
     try { history.replaceState(null, "", location.pathname + location.search); } catch {}
   }
 
@@ -482,21 +340,23 @@
     try{
       const pin = pinEl.value.trim();
       if(!pin) throw new Error("Please enter your PIN.");
-      if(!rawFrag) throw new Error("No encrypted data found. Please scan the QR again.");
+      if(!rawFrag) throw new Error("No encrypted data found. Please scan the QR code again.");
 
       unlockBtn.disabled = true;
 
-      // Demo mode
-      if (parsed.main === "demo"){
-        if (pin !== DEMO_PIN) throw new Error("Incorrect PIN (demo). Try 123456.");
-        codeEl.textContent = DEMO_CODE;
-      } else {
-        const code = await decryptWithPin(pin);
-        codeEl.textContent = code;
-      }
+      const code = await decryptWithPin(pin);
+      codeEl.textContent = code;
 
+      // Hide unlock UI entirely after success
+      unlockSection.classList.add("hidden");
+
+      // Show reveal UI
+      setNextHint();
       reveal.classList.remove("hidden");
+
       pinEl.value = "";
+
+      // Remove fragment after unlock (optional safety)
       clearUrlFragment();
     }catch(e){
       errEl.textContent = e.message || String(e);
