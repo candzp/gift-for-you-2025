@@ -86,6 +86,12 @@
     button:disabled{opacity:.6;cursor:not-allowed}
     a.btn.secondary{background:#444;color:#fff}
 
+    .btn-ghost{
+      background: rgba(0,0,0,.06);
+      color: #111;
+      border: 1px solid rgba(0,0,0,.08);
+    }
+
     .code{
       margin:14px 0 6px;
       padding:14px;
@@ -115,7 +121,7 @@
       font-size:14px;
     }
 
-    /* small demo hint */
+    /* demo hint */
     .demo-pill{
       display:inline-block;
       padding:6px 10px;
@@ -125,6 +131,106 @@
       font-size:12px;
       color: rgba(0,0,0,.55);
       margin-top:10px;
+    }
+
+    /* Scanner modal (A+B) */
+    .modal-backdrop{
+      position:fixed;
+      inset:0;
+      background: rgba(0,0,0,.45);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:5;
+      padding: 16px;
+    }
+    .modal-backdrop.show{ display:flex; }
+
+    .modal{
+      width:min(720px, 96vw);
+      background:#fff;
+      border-radius:18px;
+      box-shadow:0 24px 80px rgba(0,0,0,.25);
+      border: 1px solid rgba(255,255,255,.2);
+      overflow:hidden;
+    }
+    .modal-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:14px 16px;
+      background: rgba(0,0,0,.03);
+      border-bottom:1px solid rgba(0,0,0,.06);
+    }
+    .modal-title{
+      font-weight:800;
+      font-size:14px;
+    }
+    .modal-body{
+      padding:14px 16px 16px;
+    }
+    .modal-actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      padding: 0 16px 16px;
+    }
+    .close-btn{
+      background: rgba(0,0,0,.08);
+      color:#111;
+      border: 1px solid rgba(0,0,0,.10);
+    }
+
+    .scan-frame{
+      border-radius:14px;
+      overflow:hidden;
+      background: #000;
+      border: 1px solid rgba(0,0,0,.12);
+      position:relative;
+    }
+    video{
+      width:100%;
+      height:auto;
+      display:block;
+      background:#000;
+    }
+    .scan-overlay{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .scan-box{
+      width:min(320px, 70%);
+      aspect-ratio:1/1;
+      border-radius:18px;
+      border: 3px solid rgba(255,255,255,.65);
+      box-shadow: 0 0 0 999px rgba(0,0,0,.22) inset;
+    }
+
+    .scan-status{
+      margin-top:10px;
+      font-size:13px;
+      opacity:.8;
+    }
+
+    .tips{
+      margin-top:12px;
+      padding:12px 14px;
+      border-radius:12px;
+      background: rgba(0,0,0,.04);
+      border:1px solid rgba(0,0,0,.06);
+      font-size:13px;
+      line-height:1.4;
+    }
+    code.inline{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      background: rgba(0,0,0,.06);
+      padding: 2px 6px;
+      border-radius: 8px;
     }
   </style>
 </head>
@@ -157,7 +263,6 @@
       </p>
       <div id="err" class="error"></div>
 
-      <!-- Optional: show only when using demo -->
       <div id="demoHint" class="demo-pill hidden">Demo mode: PIN is <b>123456</b></div>
     </div>
 
@@ -180,6 +285,12 @@
       </p>
 
       <div class="notice" id="nextHint"></div>
+
+      <!-- A + B: Scan next QR -->
+      <div class="row" id="scanRow" style="margin-top:12px;">
+        <button id="scanBtn">Scan next QR 📷</button>
+        <button class="btn-ghost" id="howBtn" type="button">How to scan</button>
+      </div>
 
       <div class="divider"></div>
 
@@ -205,6 +316,45 @@
       </div>
     </div>
   </main>
+
+  <!-- Scanner / instructions modal -->
+  <div class="modal-backdrop" id="modal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-head">
+        <div class="modal-title" id="modalTitle">Scan your next gift QR</div>
+        <button class="close-btn" id="closeModal" type="button">Close</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- B: In-browser scanner (best effort) -->
+        <div id="scannerArea">
+          <div class="scan-frame">
+            <video id="video" playsinline muted></video>
+            <div class="scan-overlay"><div class="scan-box"></div></div>
+          </div>
+          <div class="scan-status" id="scanStatus">Starting camera…</div>
+        </div>
+
+        <!-- A: Always-works instructions -->
+        <div class="tips" id="tips">
+          <b>If scanning doesn’t start:</b><br>
+          1) Close this popup.<br>
+          2) Open your phone <b>Camera</b> app.<br>
+          3) Point at the other QR and tap the link.<br><br>
+          Tip: Your second QR will open the same page and you’ll enter the <b>same PIN</b>.
+        </div>
+
+        <div class="tips" style="margin-top:10px;">
+          <b>Demo testing:</b> open <code class="inline">#demo&n=1</code> and use PIN <code class="inline">123456</code>.
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button id="startScan" type="button">Start camera scan</button>
+        <button class="btn-ghost" id="stopScan" type="button">Stop</button>
+      </div>
+    </div>
+  </div>
 
 <script>
   // --- Emoji confetti (neutral celebration) ---
@@ -239,7 +389,7 @@
           { duration: dur*1000, iterations: Infinity, easing: "linear", delay: delay*1000 }
         );
       }catch{
-        // Fallback: no animation (rare)
+        // No animation fallback
       }
     }
   })();
@@ -276,7 +426,6 @@
   const parsed = parseFrag(rawFrag);
   codeNumEl.textContent = parsed.n ? `#${parsed.n}` : "#?";
 
-  // Show demo hint if in demo mode
   if (parsed.encPart === "demo") demoHint.classList.remove("hidden");
 
   function setNextHint(){
@@ -340,7 +489,6 @@
   }
 
   function clearUrlFragment(){
-    // removes #... from address bar after unlock (less shareable)
     try { history.replaceState(null, "", location.pathname + location.search); } catch {}
   }
 
@@ -353,7 +501,7 @@
 
       unlockBtn.disabled = true;
 
-      // ✅ DEMO MODE
+      // Demo mode
       if (parsed.encPart === "demo"){
         if (pin !== DEMO_PIN) throw new Error("Incorrect PIN (demo). Try 123456.");
         codeEl.textContent = DEMO_CODE;
@@ -370,8 +518,6 @@
       reveal.classList.remove("hidden");
 
       pinEl.value = "";
-
-      // Optional safety: remove fragment from URL
       clearUrlFragment();
     }catch(e){
       errEl.textContent = e.message || String(e);
@@ -380,6 +526,138 @@
       unlockBtn.disabled = false;
     }
   };
+
+  // --- A + B: QR scanning modal ---
+  const modal = document.getElementById("modal");
+  const scanBtn = document.getElementById("scanBtn");
+  const howBtn = document.getElementById("howBtn");
+  const closeModal = document.getElementById("closeModal");
+  const startScanBtn = document.getElementById("startScan");
+  const stopScanBtn = document.getElementById("stopScan");
+
+  const scannerArea = document.getElementById("scannerArea");
+  const scanStatus = document.getElementById("scanStatus");
+  const video = document.getElementById("video");
+
+  let stream = null;
+  let detector = null;
+  let scanning = false;
+  let scanLoopHandle = null;
+
+  function openModal(showHowOnly=false){
+    modal.classList.add("show");
+    if(showHowOnly){
+      scanStatus.textContent = "Camera scan is optional — you can also scan using your phone camera app.";
+    } else {
+      scanStatus.textContent = "Starting camera…";
+    }
+  }
+  function hideModal(){
+    modal.classList.remove("show");
+    stopScan();
+  }
+
+  closeModal.onclick = hideModal;
+  modal.addEventListener("click", (e) => {
+    if(e.target === modal) hideModal();
+  });
+
+  howBtn.onclick = () => openModal(true);
+  scanBtn.onclick = () => {
+    openModal(false);
+    // attempt B automatically when user explicitly clicks scan
+    startScan().catch(()=>{});
+  };
+
+  startScanBtn.onclick = () => startScan().catch(()=>{});
+  stopScanBtn.onclick = stopScan;
+
+  async function startScan(){
+    // B: in-browser QR scan (best effort) using BarcodeDetector if available
+    // If anything fails, we keep A instructions visible.
+    if (scanning) return;
+
+    if (!("mediaDevices" in navigator) || !navigator.mediaDevices.getUserMedia) {
+      scanStatus.textContent = "Camera not available in this browser. Use your phone camera app to scan the QR.";
+      return;
+    }
+    if (!("BarcodeDetector" in window)) {
+      scanStatus.textContent = "In-page QR scanning not supported here. Use your phone camera app to scan the QR.";
+      return;
+    }
+
+    try{
+      detector = new BarcodeDetector({ formats: ["qr_code"] });
+    }catch{
+      scanStatus.textContent = "Scanner unavailable. Use your phone camera app to scan the QR.";
+      return;
+    }
+
+    scanStatus.textContent = "Requesting camera permission…";
+
+    try{
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" },
+        audio: false
+      });
+      video.srcObject = stream;
+      await video.play();
+
+      scanning = true;
+      scanStatus.textContent = "Point the camera at the other QR…";
+
+      scanLoop();
+    }catch(err){
+      scanStatus.textContent = "Could not start camera. Use your phone camera app to scan the QR.";
+      stopScan();
+    }
+  }
+
+  function scanLoop(){
+    if (!scanning) return;
+
+    scanLoopHandle = requestAnimationFrame(async () => {
+      try{
+        if (video.readyState >= 2 && detector){
+          const barcodes = await detector.detect(video);
+          if (barcodes && barcodes.length){
+            const value = barcodes[0].rawValue || "";
+            if (value.startsWith("http://") || value.startsWith("https://")) {
+              scanStatus.textContent = "QR detected! Opening…";
+              stopScan();
+              // navigate to scanned URL
+              location.href = value;
+              return;
+            } else {
+              scanStatus.textContent = "QR detected, but it doesn’t look like a link.";
+            }
+          }
+        }
+      }catch{
+        // ignore and continue scanning
+      }
+      scanLoop();
+    });
+  }
+
+  function stopScan(){
+    scanning = false;
+    if (scanLoopHandle) cancelAnimationFrame(scanLoopHandle);
+    scanLoopHandle = null;
+
+    if (video){
+      try{ video.pause(); }catch{}
+      video.srcObject = null;
+    }
+    if (stream){
+      try{
+        stream.getTracks().forEach(t => t.stop());
+      }catch{}
+      stream = null;
+    }
+    detector = null;
+    scanStatus.textContent = "Camera stopped. You can scan using your phone camera app anytime.";
+  }
 </script>
 </body>
 </html>
