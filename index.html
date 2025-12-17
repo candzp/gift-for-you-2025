@@ -121,18 +121,6 @@
       font-size:14px;
     }
 
-    /* demo hint */
-    .demo-pill{
-      display:inline-block;
-      padding:6px 10px;
-      border-radius:999px;
-      background: rgba(0,0,0,.05);
-      border:1px solid rgba(0,0,0,.05);
-      font-size:12px;
-      color: rgba(0,0,0,.55);
-      margin-top:10px;
-    }
-
     /* Scanner modal (A+B) */
     .modal-backdrop{
       position:fixed;
@@ -151,8 +139,8 @@
       background:#fff;
       border-radius:18px;
       box-shadow:0 24px 80px rgba(0,0,0,.25);
-      border: 1px solid rgba(255,255,255,.2);
       overflow:hidden;
+      border:1px solid rgba(0,0,0,.08);
     }
     .modal-head{
       display:flex;
@@ -226,12 +214,6 @@
       font-size:13px;
       line-height:1.4;
     }
-    code.inline{
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-      background: rgba(0,0,0,.06);
-      padding: 2px 6px;
-      border-radius: 8px;
-    }
   </style>
 </head>
 
@@ -262,8 +244,6 @@
         Your QR contains an <b>encrypted</b> gift code. The PIN unlocks it on your device.
       </p>
       <div id="err" class="error"></div>
-
-      <div id="demoHint" class="demo-pill hidden">Demo mode: PIN is <b>123456</b></div>
     </div>
 
     <!-- REVEAL SECTION -->
@@ -343,10 +323,6 @@
           3) Point at the other QR and tap the link.<br><br>
           Tip: Your second QR will open the same page and you’ll enter the <b>same PIN</b>.
         </div>
-
-        <div class="tips" style="margin-top:10px;">
-          <b>Demo testing:</b> open <code class="inline">#demo&n=1</code> and use PIN <code class="inline">123456</code>.
-        </div>
       </div>
 
       <div class="modal-actions">
@@ -367,11 +343,11 @@
       const e = document.createElement("span");
       e.textContent = emojis[Math.floor(Math.random()*emojis.length)];
 
-      const left = Math.random()*100;            // vw
       const dur = 7 + Math.random()*7;           // seconds
       const delay = -Math.random()*10;           // start mid-animation
       const size = 16 + Math.random()*16;        // px
       const drift = (Math.random()*2 - 1) * 140; // px drift
+      const left = Math.random()*100;            // vw
 
       e.style.left = left + "vw";
       e.style.fontSize = size + "px";
@@ -379,7 +355,6 @@
 
       holder.appendChild(e);
 
-      // Web Animations API for drift + fall
       try{
         e.animate(
           [
@@ -389,18 +364,16 @@
           { duration: dur*1000, iterations: Infinity, easing: "linear", delay: delay*1000 }
         );
       }catch{
-        // No animation fallback
+        // no-op
       }
     }
   })();
 
-  // --- Gift unlock logic (Option B + Demo mode) ---
-  // Real fragment:
-  // #enc.<salt>.<iv>.<ct>&n=1|2
-  // Demo fragment:
-  // #demo&n=1   (PIN 123456)
+  // --- Gift unlock logic (Option B + Demo logic, but no UI hints) ---
   const rawFrag = (location.hash || "").slice(1);
 
+  // Demo still works silently:
+  // Use #demo&n=1 and PIN 123456
   const DEMO_PIN = "123456";
   const DEMO_CODE = "TEST-CODE-XXXX-XXXX";
 
@@ -412,7 +385,6 @@
   const unlockBtn = document.getElementById("unlockBtn");
   const codeNumEl = document.getElementById("codeNum");
   const nextHint = document.getElementById("nextHint");
-  const demoHint = document.getElementById("demoHint");
 
   function parseFrag(f){
     let encPart = f;
@@ -425,8 +397,6 @@
 
   const parsed = parseFrag(rawFrag);
   codeNumEl.textContent = parsed.n ? `#${parsed.n}` : "#?";
-
-  if (parsed.encPart === "demo") demoHint.classList.remove("hidden");
 
   function setNextHint(){
     const n = parsed.n;
@@ -501,19 +471,16 @@
 
       unlockBtn.disabled = true;
 
-      // Demo mode
+      // Silent demo mode
       if (parsed.encPart === "demo"){
-        if (pin !== DEMO_PIN) throw new Error("Incorrect PIN (demo). Try 123456.");
+        if (pin !== DEMO_PIN) throw new Error("Incorrect PIN. Please try again.");
         codeEl.textContent = DEMO_CODE;
       } else {
         const code = await decryptWithPin(pin);
         codeEl.textContent = code;
       }
 
-      // Hide unlock UI entirely after success
       unlockSection.classList.add("hidden");
-
-      // Show reveal UI
       setNextHint();
       reveal.classList.remove("hidden");
 
@@ -535,7 +502,6 @@
   const startScanBtn = document.getElementById("startScan");
   const stopScanBtn = document.getElementById("stopScan");
 
-  const scannerArea = document.getElementById("scannerArea");
   const scanStatus = document.getElementById("scanStatus");
   const video = document.getElementById("video");
 
@@ -544,13 +510,9 @@
   let scanning = false;
   let scanLoopHandle = null;
 
-  function openModal(showHowOnly=false){
+  function openModal(){
     modal.classList.add("show");
-    if(showHowOnly){
-      scanStatus.textContent = "Camera scan is optional — you can also scan using your phone camera app.";
-    } else {
-      scanStatus.textContent = "Starting camera…";
-    }
+    scanStatus.textContent = "Starting camera…";
   }
   function hideModal(){
     modal.classList.remove("show");
@@ -562,19 +524,13 @@
     if(e.target === modal) hideModal();
   });
 
-  howBtn.onclick = () => openModal(true);
-  scanBtn.onclick = () => {
-    openModal(false);
-    // attempt B automatically when user explicitly clicks scan
-    startScan().catch(()=>{});
-  };
+  howBtn.onclick = () => { openModal(); /* do not auto-start */ };
+  scanBtn.onclick = () => { openModal(); startScan().catch(()=>{}); };
 
   startScanBtn.onclick = () => startScan().catch(()=>{});
   stopScanBtn.onclick = stopScan;
 
   async function startScan(){
-    // B: in-browser QR scan (best effort) using BarcodeDetector if available
-    // If anything fails, we keep A instructions visible.
     if (scanning) return;
 
     if (!("mediaDevices" in navigator) || !navigator.mediaDevices.getUserMedia) {
@@ -605,9 +561,8 @@
 
       scanning = true;
       scanStatus.textContent = "Point the camera at the other QR…";
-
       scanLoop();
-    }catch(err){
+    }catch{
       scanStatus.textContent = "Could not start camera. Use your phone camera app to scan the QR.";
       stopScan();
     }
@@ -625,7 +580,6 @@
             if (value.startsWith("http://") || value.startsWith("https://")) {
               scanStatus.textContent = "QR detected! Opening…";
               stopScan();
-              // navigate to scanned URL
               location.href = value;
               return;
             } else {
@@ -634,7 +588,7 @@
           }
         }
       }catch{
-        // ignore and continue scanning
+        // ignore and keep scanning
       }
       scanLoop();
     });
@@ -645,17 +599,15 @@
     if (scanLoopHandle) cancelAnimationFrame(scanLoopHandle);
     scanLoopHandle = null;
 
-    if (video){
-      try{ video.pause(); }catch{}
-      video.srcObject = null;
-    }
+    try{ video.pause(); }catch{}
+    video.srcObject = null;
+
     if (stream){
-      try{
-        stream.getTracks().forEach(t => t.stop());
-      }catch{}
+      try{ stream.getTracks().forEach(t => t.stop()); }catch{}
       stream = null;
     }
     detector = null;
+
     scanStatus.textContent = "Camera stopped. You can scan using your phone camera app anytime.";
   }
 </script>
